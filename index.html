@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta http-equiv="Content-type" content="text/html; charset=utf-8"/>
+        <title>Global IndexedDB Promised</title>
+        <script src="idb.js"></script>
+        <script type="text/javascript">
+            const DATABASE = 'GLOBAL_IDB';
+            const STORE = 'TestIDB';
+            document.addEventListener('DOMContentLoaded', () => {
+                const container = document.getElementById('container');
+                const list = document.createElement('ul');
+                container.appendChild(list);
+                let listItem = document.createElement('li');
+                listItem.innerText = `idb in window: ${'idb' in window}`;
+                list.appendChild(listItem);
+
+                idb.open(DATABASE, 1, function (upgradeDb) {
+                    switch(upgradeDb.oldVersion) {
+                        case 0:
+                            upgradeDb.createObjectStore(STORE, {
+                                keyPath: 'id',
+                                autoIncrement: true
+                            });
+                    }
+                })
+                .then(db => {
+                    listItem = document.createElement('li');
+                    listItem.innerText = `GLOBAL_IDB opened`;
+                    list.appendChild(listItem);
+                    const tx = db.transaction(STORE, 'readwrite');
+                    tx.objectStore(STORE)
+                        .put({
+                            data: 'Test'
+                        });
+                    listItem = document.createElement('li');
+                    listItem.innerText = `Put: ${JSON.stringify({data: 'Test'})}`;
+                    list.appendChild(listItem);  
+                    
+                    tx.objectStore(STORE)
+                        .getAll()
+                        .then(allObjects => {
+                            allObjects.forEach(item => {
+                                listItem = document.createElement('li');
+                                listItem.innerText = `Get: ${JSON.stringify(item)}`;
+                                list.appendChild(listItem);                                  
+                            });    
+                        });      
+                        
+                        
+                });
+            });
+        </script>
+    </head>
+    <body>
+        <div id="container"></div>
+    </body>
+</html>
